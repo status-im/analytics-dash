@@ -56,12 +56,6 @@ def getUpdatesDaily(t):
 def plotData(filename, ylabel, timespan, x, y):
     import matplotlib.pyplot as plt
     import matplotlib.dates as mdates
-    from os.path import join
-
-    # TODO: No real cmdline parsing abstraction currently
-    from sys import argv
-
-    output_path = argv[1]
 
     plt.clf()
     plt.gca().xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m-%d"))
@@ -76,17 +70,21 @@ def plotData(filename, ylabel, timespan, x, y):
 
     plt.plot(x, y)
     plt.gcf().autofmt_xdate()
-    plt.savefig(join(output_path, filename), dpi=150)
+    plt.savefig(filename, dpi=150)
 
 
 def main():
     from json import loads
+    from os.path import join
+    from sys import argv
+
+    getPath = lambda n: join(argv[1], n)
 
     data = getData(loads(openURL("sales/dates/-120/0").read()))
-    plotData("downloads_daily.png", "Downloads", "Daily", *getDownloadsDaily(data))
-    plotData("updates_daily.png", "Updates", "Daily", *getUpdatesDaily(data))
-    plotData("downloads_weekly.png", "Downloads", "Weekly", *getDownloadsWeekly(data))
-    plotData("updates_weekly.png", "Updates", "Weekly", *getUpdatesWeekly(data))
+    plotData(getPath("downloads_daily.png"), "Downloads", "Daily", *getDownloadsDaily(data))
+    plotData(getPath("updates_daily.png"), "Updates", "Daily", *getUpdatesDaily(data))
+    plotData(getPath("downloads_weekly.png"), "Downloads", "Weekly", *getDownloadsWeekly(data))
+    plotData(getPath("updates_weekly.png"), "Updates", "Weekly", *getUpdatesWeekly(data))
 
 
 main()
