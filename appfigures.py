@@ -54,6 +54,10 @@ def getUpdatesDaily(t):
 
 
 def plotData(filename, ylabel, timespan, x, y):
+    # allow this to run on a headless server
+    import matplotlib
+    matplotlib.use("Agg")
+
     import matplotlib.pyplot as plt
     import matplotlib.dates as mdates
 
