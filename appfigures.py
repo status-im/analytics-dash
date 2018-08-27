@@ -37,12 +37,16 @@ def combineDailyToWeekly(pj, func):
     return [func(pj[i : i + chunkSize]) for i in range(0, len(pj), chunkSize)]
 
 
+def getLastElem(arr):
+    return arr[-1]
+
+
 def getDownloadsWeekly(t):
-    return combineDailyToWeekly(t[0], lambda _: _[-1]), combineDailyToWeekly(t[1], sum)
+    return combineDailyToWeekly(t[0], getLastElem), combineDailyToWeekly(t[1], sum)
 
 
 def getUpdatesWeekly(t):
-    return combineDailyToWeekly(t[0], lambda _: _[-1]), combineDailyToWeekly(t[2], sum)
+    return combineDailyToWeekly(t[0], getLastElem), combineDailyToWeekly(t[2], sum)
 
 
 def getDownloadsDaily(t):
@@ -60,6 +64,8 @@ def plotData(filename, ylabel, timespan, x, y):
 
     import matplotlib.pyplot as plt
     import matplotlib.dates as mdates
+
+    assert len(x) == len(y)
 
     plt.clf()
     plt.gca().xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m-%d"))
