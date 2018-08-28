@@ -60,6 +60,7 @@ def getUpdatesDaily(t):
 def plotData(filename, ylabel, timespan, x, y):
     # allow this to run on a headless server
     import matplotlib
+
     matplotlib.use("Agg")
 
     import matplotlib.pyplot as plt
@@ -83,18 +84,35 @@ def plotData(filename, ylabel, timespan, x, y):
     plt.savefig(filename, dpi=150)
 
 
+def checkOutputPath(path):
+    from os import access, F_OK
+
+    return access(path, F_OK)
+
+
 def main():
     from json import loads
     from os.path import join
     from sys import argv
 
-    getPath = lambda n: join(argv[1], n)
+    outputPath = argv[1]
+    assert checkOutputPath(outputPath)
+    getPath = lambda n: join(outputPath, n)
 
     data = getData(loads(openURL("sales/dates/-120/0").read()))
-    plotData(getPath("downloads_daily.png"), "Downloads", "Daily", *getDownloadsDaily(data))
+    plotData(
+        getPath("downloads_daily.png"), "Downloads", "Daily", *getDownloadsDaily(data)
+    )
     plotData(getPath("updates_daily.png"), "Updates", "Daily", *getUpdatesDaily(data))
-    plotData(getPath("downloads_weekly.png"), "Downloads", "Weekly", *getDownloadsWeekly(data))
-    plotData(getPath("updates_weekly.png"), "Updates", "Weekly", *getUpdatesWeekly(data))
+    plotData(
+        getPath("downloads_weekly.png"),
+        "Downloads",
+        "Weekly",
+        *getDownloadsWeekly(data)
+    )
+    plotData(
+        getPath("updates_weekly.png"), "Updates", "Weekly", *getUpdatesWeekly(data)
+    )
 
 
 main()
