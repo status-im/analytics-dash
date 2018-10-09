@@ -16,13 +16,17 @@ node('linux') {
     sh 'pip3 install --user -r requirements.txt'
   }
 
-  stage('Generate Images') {
+  stage('Gen AppFigures Stats') {
     withCredentials([
       string(credentialsId: 'appfigures-key',       variable: 'CLIENT_KEY'),
       string(credentialsId: 'appfigures-header',    variable: 'AUTH_HEADER'),
     ]) {
       sh './appfigures.py analytics'
     }
+  }
+
+  stage('Gen Whisper Stats') {
+    sh './prometheus.py analytics'
   }
 
   stage('Push Changes') {
