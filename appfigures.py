@@ -58,32 +58,26 @@ def getAxes(t, y_axis_choice, numDays):
     )
 
 
-def plotData(filename, ylabel, timespan, x, y):
-    # allow this to run on a headless server
-    import matplotlib
-
-    matplotlib.use("Agg")
-
-    import matplotlib.pyplot as plt
-    import matplotlib.dates as mdates
+def createPlotScript(filename, ylabel, timespan, x, y):
+    # TODO: refactor
+    # TODO: the div names need to be distinct; they'll be a param basically
+    # cache https://cdn.plot.ly/plotly-latest.min.js locally
+    from operator import methodcaller
 
     assert len(x) == len(y)
 
-    # https://stackoverflow.com/questions/9627686/plotting-dates-on-the-x-axis-with-pythons-matplotlib#9627970
-    plt.clf()
-    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m-%d"))
-    plt.gca().xaxis.set_major_locator(mdates.AutoDateLocator())
-    plt.xlabel("Date")
-
-    assert ylabel in ("Downloads", "Updates", "Net New Installs")
-    plt.ylabel(ylabel)
-
-    assert timespan in ("Daily", "Weekly")
-    plt.title("Status.im %s %s (Appfigures)" % (timespan, ylabel))
-
-    plt.plot(x, y)
-    plt.gcf().autofmt_xdate()
-    plt.savefig(filename, dpi=150)
+    series_template = 'var series1 = { type: "scatter", mode: "lines", name: "SERIES_NAME", x: ["X_DATA"], y: ["Y_DATA"], line: {color: "COLOR"}}'
+    new_plot_template = 'Plotly.newPlot("DIV_NAME", [series1], {title: "TITLE"});'
+    title = "Status.im %s %s" % (timespan, ylabel)
+    series = (
+        series_template.replace("SERIES_NAME", ylabel)
+        .replace("COLOR", "#17BECF")
+        .replace("X_DATA", '", "'.join(map(methodcaller("isoformat"), x)))
+        .replace("Y_DATA", '", "'.join(map(str, y)))
+    )
+    new_plot = new_plot_template.replace("TITLE", title).replace("DIV_NAME", "myDiv")
+    with open(filename, "w") as f:
+        f.write("\n".join([series, new_plot]))
 
 
 def checkOutputPath(path):
@@ -98,11 +92,7 @@ def main():
     from sys import argv
 
     outputPath = argv[1]
-
-    # TOCTOU, but doesn't much matter. Just helpful to detect
-    # failures early if possible.
     assert checkOutputPath(outputPath)
-
     getPath = lambda n: join(outputPath, n)
 
     data = getData(loads(openURL("sales/dates/-120/0").read()))
@@ -110,20 +100,20 @@ def main():
     # data has, in order: date, downloads, updates, and net new installs
     for interval, numDays in (("Daily", 1), ("Weekly", 7)):
         fi = interval.lower()
-        plotData(
-            getPath("downloads_%s.png" % fi),
+        createPlotScript(
+            getPath("downloads_%s.js" % fi),
             "Downloads",
             interval,
             *getAxes(data, 1, numDays)
         )
-        plotData(
-            getPath("updates_%s.png" % fi),
+        createPlotScript(
+            getPath("updates_%s.js" % fi),
             "Updates",
             interval,
             *getAxes(data, 2, numDays)
         )
-        plotData(
-            getPath("netnewinstalls_%s.png" % fi),
+        createPlotScript(
+            getPath("netnewinstalls_%s.js" % fi),
             "Net New Installs",
             interval,
             *getAxes(data, 3, numDays)

@@ -39,31 +39,26 @@ def getData(pj):
     )
 
 
-def plotData(filename, ylabel, timespan, x, y):
-    # TODO: factor out as common routine
-    # allow this to run on a headless server
-    import matplotlib
-
-    matplotlib.use("Agg")
-
-    import matplotlib.pyplot as plt
-    import matplotlib.dates as mdates
+def createPlotScript(filename, ylabel, timespan, x, y):
+    # TODO: refactor
+    # TODO: the div names need to be distinct; they'll be a param basically
+    # cache https://cdn.plot.ly/plotly-latest.min.js locally
+    from operator import methodcaller
 
     assert len(x) == len(y)
 
-    # https://stackoverflow.com/questions/9627686/plotting-dates-on-the-x-axis-with-pythons-matplotlib#9627970
-    plt.clf()
-    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m-%d"))
-    plt.gca().xaxis.set_major_locator(mdates.AutoDateLocator())
-    plt.xlabel("Date")
-
-    plt.ylabel(ylabel)
-
-    plt.title("Status.im %s %s (Prometheus)" % (timespan, ylabel))
-
-    plt.plot(x, y)
-    plt.gcf().autofmt_xdate()
-    plt.savefig(filename, dpi=150)
+    series_template = 'var series1 = { type: "scatter", mode: "lines", name: "SERIES_NAME", x: ["X_DATA"], y: ["Y_DATA"], line: {color: "COLOR"}}'
+    new_plot_template = 'Plotly.newPlot("DIV_NAME", [series1], {title: "TITLE"});'
+    title = "Status.im %s %s" % (timespan, ylabel)
+    series = (
+        series_template.replace("SERIES_NAME", ylabel)
+        .replace("COLOR", "#17BECF")
+        .replace("X_DATA", '", "'.join(map(methodcaller("isoformat"), x)))
+        .replace("Y_DATA", '", "'.join(map(str, y)))
+    )
+    new_plot = new_plot_template.replace("TITLE", title).replace("DIV_NAME", "myDiv")
+    with open(filename, "w") as f:
+        f.write("\n".join([series, new_plot]))
 
 
 def distinct_users():
@@ -97,15 +92,15 @@ def main():
 
     getPath = lambda n: join(argv[1], n)
 
-    plotData(
-        getPath("whisper_distinct_users_daily.png"),
+    createPlotScript(
+        getPath("whisper_distinct_users_daily.js"),
         "Whisper Users (Public Channels)",
         "Daily",
         *distinct_users()
     )
 
-    plotData(
-        getPath("whisper_messages_hourly.png"),
+    createPlotScript(
+        getPath("whisper_messages_hourly.js"),
         "Whisper Messages (Public Channels)",
         "Hourly",
         *getData(
@@ -115,8 +110,8 @@ def main():
         )
     )
 
-    plotData(
-        getPath("whisper_messages_daily.png"),
+    createPlotScript(
+        getPath("whisper_messages_daily.js"),
         "Whisper Messages (Public Channels)",
         "Daily",
         *getData(
@@ -126,8 +121,8 @@ def main():
         )
     )
 
-    plotData(
-        getPath("whisper_messages_weekly.png"),
+    createPlotScript(
+        getPath("whisper_messages_weekly.js"),
         "Whisper Messages (Public Channels)",
         "Weekly",
         *getData(
