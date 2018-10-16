@@ -62,6 +62,7 @@ def createPlotScript(filename, ylabel, timespan, x, y):
     # TODO: refactor
     # TODO: the div names need to be distinct; they'll be a param basically
     # cache https://cdn.plot.ly/plotly-latest.min.js locally
+    # TODO: add assertions on timespan
     from operator import methodcaller
 
     assert len(x) == len(y)
